@@ -39,3 +39,7 @@ A Python script (`scrape.py`) runs on GitHub Actions every 12 hours:
 2. Visits each game page to extract title, file size, upload date, and download URI
 3. Outputs `steamunlocked.json` in Hydra Launcher format
 4. Commits and pushes the updated file to this repository
+
+## Shout out
+
+Credit to yjv01 for comming up with the initial python code, and schedule job yml code. All initial credit goes to him, I only fixed some major issues with finding the steamunlocked games, and optimized it.
