@@ -23,6 +23,44 @@ OUTPUT_FILE = "steamunlocked.json"
 MAX_WORKERS = 8       # concurrent requests to individual game pages
 REQUEST_DELAY = 0.3   # seconds between each request per thread
 
+def normalize_title(title):
+    return " ".join(title.split()).casefold()
+
+
+def load_existing_game_keys(filename):
+    try:
+        with open(filename, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        return {
+            normalize_title(game.get("title", ""))
+            for game in data.get("downloads", [])
+            if game.get("title")
+        }
+
+    except FileNotFoundError:
+        return set()
+
+    except json.JSONDecodeError:
+        print("[!] Existing JSON is invalid; treating it as empty.")
+        return set()
+
+def load_existing_downloads(filename):
+    try:
+        with open(filename, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return data.get("downloads", [])
+    except FileNotFoundError:
+        return []
+    except json.JSONDecodeError:
+        print("[!] Existing JSON is invalid. Starting with an empty list.")
+        return []
+
+
+def game_key(game):
+    # Title is the only reliable identifier in your current output structure.
+    return game.get("title", "").strip().casefold()
+
 def get_all_game_links():
     """Fetch game links from /#/ and /a/ through /z/ pages."""
     base_url = ALL_GAMES_URL.rstrip("/")
@@ -172,11 +210,30 @@ def main():
     start = time.time()
 
     # Step 1: get all game links
+    existing_keys = load_existing_game_keys(OUTPUT_FILE)
+    downloads = load_existing_downloads(OUTPUT_FILE)
+
     game_links = get_all_game_links()
 
-    # Step 2: fetch each game page concurrently
-    downloads = []
-    total = len(game_links)
+    new_game_links = [
+    game
+    for game in game_links
+    if normalize_title(game["title"]) not in existing_keys
+    ]
+
+    skipped = len(game_links) - len(new_game_links)
+
+    print(f"[*] Skipping {skipped} games already stored in {OUTPUT_FILE}.")
+    print(f"[*] Fetching details for {len(new_game_links)} new games.")
+
+    if not new_game_links:
+        elapsed = time.time() - start
+        print(f"[✓] No new games found. Nothing to fetch.")
+        print(f"[*] {len(downloads)} games already exist in {OUTPUT_FILE}.")
+        print(f"[*] Finished in {elapsed:.1f}s.")
+        return
+
+    total = len(new_game_links)
     completed = 0
 
     print(f"[*] Fetching {total} game pages with {MAX_WORKERS} workers ...")
@@ -184,7 +241,7 @@ def main():
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = {
             executor.submit(parse_game_page, g["title"], g["url"]): g
-            for g in game_links
+            for g in new_game_links
         }
         for future in as_completed(futures):
             result = future.result()
