@@ -11,7 +11,7 @@ The `steamunlocked.json` file is automatically refreshed every **12 hours** via 
 3. Paste this URL:
 
 ```
-https://raw.githubusercontent.com/yjv01/hydra-steamunlocked/main/steamunlocked.json
+[https://raw.githubusercontent.com/yjv01/hydra-steamunlocked/main/steamunlocked.json](https://raw.githubusercontent.com/NightlyColt/hydra-steamunlocked/main/steamunlocked.json)
 ```
 
 ## JSON Format
