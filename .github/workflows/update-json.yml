@@ -1,4 +1,4 @@
-name: Daily Refresh
+name: Update Json
 
 on:
   schedule:
